@@ -19,6 +19,9 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.websecure.http.tls.options=default@file"
+      - "--providers.file.directory=/tls"
+      - "--providers.file.watch=true"
       - "--entrypoints.traefik.address=:8080"
       - "--serversTransport.insecureSkipVerify=true"
       - "--certificatesresolvers.le.acme.email=benoit@bentoweb.fr"
@@ -33,8 +36,28 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/certs:ro
       - ./letsencrypt:/letsencrypt
+      - ./tls.yaml:/tls/tls.yaml:ro
+      - ./404.html:/usr/share/nginx/html/index.html:ro
     networks:
       - proxy
+
+  # Service pour pages d'erreur 404
+  error-page:
+    image: nginx:alpine
+    container_name: error-page
+    restart: unless-stopped
+    volumes:
+      - ./404.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      # Router universel pour tous les domaines avec une règle qui fonctionne réellement
+      - "traefik.http.routers.error-page.rule=HostRegexp(`^.+$`)"
+      - "traefik.http.routers.error-page.priority=1"
+      - "traefik.http.routers.error-page.entrypoints=websecure"
+      - "traefik.http.routers.error-page.tls=true"
+      - "traefik.http.services.error-page.loadbalancer.server.port=80"
     # Traefik Dynamic configuration via Docker labels
     # labels:
     # Enable self‑routing

@@ -2,3 +2,13 @@ tls:
   certificates:
     - certFile: /certs/local.crt
       keyFile: /certs/local.key
+  options:
+    default:
+      sslProtocols:
+        - "TLSv1.2"
+        - "TLSv1.3"
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/local.crt
+        keyFile: /certs/local.key
