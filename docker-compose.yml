@@ -41,53 +41,25 @@ services:
     networks:
       - proxy
 
-  # Service pour pages d'erreur 404
+  # template 404 par défaut
   error-page:
     image: nginx:alpine
     container_name: error-page
     restart: unless-stopped
     volumes:
+      - ./404.html:/usr/share/nginx/html/404.html:ro
       - ./404.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx-error.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - proxy
     labels:
       - "traefik.enable=true"
-      # Router universel pour tous les domaines avec une règle qui fonctionne réellement
       - "traefik.http.routers.error-page.rule=HostRegexp(`^.+$`)"
       - "traefik.http.routers.error-page.priority=1"
       - "traefik.http.routers.error-page.entrypoints=websecure"
       - "traefik.http.routers.error-page.tls=true"
       - "traefik.http.services.error-page.loadbalancer.server.port=80"
-    # Traefik Dynamic configuration via Docker labels
-    # labels:
-    # Enable self‑routing
-    # - "traefik.enable=true"
-
-    # Dashboard router
-    # - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
-    # - "traefik.http.routers.dashboard.entrypoints=websecure"
-    # - "traefik.http.routers.dashboard.service=api@internal"
-    # - "traefik.http.routers.dashboard.tls=true"
-
-    # Basic‑auth middleware
-    # - "traefik.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
-    # - "traefik.http.routers.dashboard.middlewares=dashboard-auth@docker"
 
 networks:
   proxy:
     external: true
-
-  # Exemple de service nginx HTTPS
-  # nginx-example:
-  #   image: nginx:latest
-  #   networks:
-  #     - proxy
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.nginx-example.rule=Host(`example.com`)"
-  #     - "traefik.http.routers.nginx-example.entrypoints=websecure"
-  #     - "traefik.http.routers.nginx-example.tls=true"
-  #     - "traefik.http.routers.nginx-example.tls.certresolver=le"
-  #     # Configuration pour backend HTTPS
-  #     - "traefik.http.services.nginx-example.loadbalancer.server.scheme=https"
-  #     - "traefik.http.services.nginx-example.loadbalancer.server.port=443"
