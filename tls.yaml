@@ -4,9 +4,7 @@ tls:
       keyFile: /certs/local.key
   options:
     default:
-      sslProtocols:
-        - "TLSv1.2"
-        - "TLSv1.3"
+      minVersion: VersionTLS12
   stores:
     default:
       defaultCertificate:
