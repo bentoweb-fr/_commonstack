@@ -75,6 +75,8 @@ TRAEFIK_LOG_LEVEL=INFO
 TRAEFIK_INSECURE_SKIP_VERIFY=false
 ```
 
+Le port bind du dashboard est un port seul. La valeur `TRAEFIK_DASHBOARD_HOST` reste un IP/host, tandis que `TRAEFIK_DASHBOARD_PORT` reste un numéro de port uniquement.
+
 ## Routage par domaine
 
 Chaque service doit être exposé via Traefik par labels Docker, selon son host.
