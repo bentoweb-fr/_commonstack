@@ -21,6 +21,7 @@ TRAEFIK_HTTP_PORT=80
 TRAEFIK_HTTPS_PORT=443
 TRAEFIK_DASHBOARD_HOST=127.0.0.1
 TRAEFIK_DASHBOARD_PORT=8080
+ACME_EMAIL=admin@example.com
 TRAEFIK_API_INSECURE=false
 TRAEFIK_LOG_LEVEL=INFO
 TRAEFIK_INSECURE_SKIP_VERIFY=false
@@ -77,6 +78,44 @@ TRAEFIK_INSECURE_SKIP_VERIFY=false
 
 Le port bind du dashboard est un port seul. La valeur `TRAEFIK_DASHBOARD_HOST` reste un IP/host, tandis que `TRAEFIK_DASHBOARD_PORT` reste un numéro de port uniquement.
 
+## HTTPS OVH avec HTTP-01
+
+HTTP-01 est la solution la plus simple lorsqu'un seul VPS reçoit directement le trafic Internet. Elle ne demande aucune clé API OVH. Elle ne permet en revanche pas de créer un certificat wildcard (`*.example.com`).
+
+Pour chaque domaine ou sous-domaine dans la zone DNS OVH :
+
+1. Créer un enregistrement `A` vers l'IPv4 publique du VPS.
+2. Créer un enregistrement `AAAA` uniquement si le VPS est réellement joignable en IPv6. Supprimer tout `AAAA` obsolète.
+3. Autoriser les ports TCP `80` et `443` dans le pare-feu OVH et dans celui du VPS.
+4. Vérifier qu'aucun autre serveur, comme Nginx ou Apache, n'occupe ces ports.
+5. Démarrer Traefik avec `make run`.
+
+Le port `80` doit rester accessible publiquement : Let's Encrypt appelle temporairement `http://domaine/.well-known/acme-challenge/...`. La redirection HTTP vers HTTPS configurée par Traefik est compatible avec ce challenge.
+
+Contrôles utiles depuis une autre machine :
+
+```bash
+dig +short A app.example.com
+dig +short AAAA app.example.com
+curl -I http://app.example.com
+curl -I https://app.example.com
+```
+
+Sur le VPS :
+
+```bash
+sudo ss -lntp | grep -E ':(80|443) '
+docker compose logs traefik | grep -Ei 'acme|certificate|challenge|error'
+```
+
+En cas d'échecs répétés pendant les essais, utiliser temporairement le serveur de staging Let's Encrypt pour éviter ses limites de requêtes :
+
+```yaml
+- "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+```
+
+Retirer cette option avant de demander le certificat de production.
+
 ## Routage par domaine
 
 Chaque service doit être exposé via Traefik par labels Docker, selon son host.
@@ -88,8 +127,6 @@ labels:
   - "traefik.enable=true"
   - "traefik.http.routers.api.rule=Host(`api.example.com`)"
   - "traefik.http.routers.api.entrypoints=websecure"
-  - "traefik.http.routers.api.tls=true"
-  - "traefik.http.routers.api.tls.certresolver=le"
   - "traefik.http.services.api.loadbalancer.server.port=3000"
 ```
 
@@ -100,10 +137,10 @@ labels:
   - "traefik.enable=true"
   - "traefik.http.routers.frontend.rule=Host(`app.example.com`)"
   - "traefik.http.routers.frontend.entrypoints=websecure"
-  - "traefik.http.routers.frontend.tls=true"
-  - "traefik.http.routers.frontend.tls.certresolver=le"
   - "traefik.http.services.frontend.loadbalancer.server.port=5173"
 ```
+
+Le TLS et le resolver `le` sont hérités de l'entrypoint `websecure`. Le service doit aussi rejoindre le réseau Docker externe `proxy`. Il n'est pas nécessaire de publier son port applicatif sur le VPS.
 
 ## Bonnes pratiques sur VPS
 

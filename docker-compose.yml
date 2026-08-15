@@ -25,12 +25,13 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.websecure.http.tls.certresolver=le"
       - "--entrypoints.websecure.http.tls.options=default@file"
       - "--providers.file.directory=/tls"
       - "--providers.file.watch=true"
       - "--entrypoints.traefik.address=:8080"
       - "--serversTransport.insecureSkipVerify=${TRAEFIK_INSECURE_SKIP_VERIFY:-false}"
-      - "--certificatesresolvers.le.acme.email=benoit@bentoweb.fr"
+      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL:-benoit@bentoweb.fr}"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.le.acme.httpchallenge=true"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
@@ -40,7 +41,6 @@ services:
       - "--accesslog=true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/certs:ro
       - ./letsencrypt:/letsencrypt
       - ./tls.yaml:/tls/tls.yaml:ro
       - ./404.html:/usr/share/nginx/html/index.html:ro
