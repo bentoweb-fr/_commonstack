@@ -1,5 +1,7 @@
 NETWORK=proxy
 MODE ?= prod
+MKCERT ?= $(HOME)/.local/bin/mkcert
+LOCAL_CERT_DOMAIN ?= 36o-local.fr
 
 ifeq ($(MODE),prod)
 TRAEFIK_MODE := prod
@@ -19,8 +21,21 @@ endif
 
 export TRAEFIK_MODE TRAEFIK_API_INSECURE TRAEFIK_LOG_LEVEL TRAEFIK_INSECURE_SKIP_VERIFY TRAEFIK_DASHBOARD_HOST TRAEFIK_DASHBOARD_PORT
 
+cert-local:
+	@command -v $(MKCERT) >/dev/null || { echo "mkcert est requis"; exit 1; }
+	@mkdir -p certs tls
+	@TRUST_STORES=nss $(MKCERT) -install
+	@$(MKCERT) -cert-file certs/local.crt -key-file certs/local.key "$(LOCAL_CERT_DOMAIN)" "*.$(LOCAL_CERT_DOMAIN)"
+	@chmod 644 certs/local.crt
+	@chmod 600 certs/local.key
+	@printf '%s\n' \
+		'tls:' \
+		'  certificates:' \
+		'    - certFile: /certs/local.crt' \
+		'      keyFile: /certs/local.key' > tls/local.yaml
+
 run:
-	@mkdir -p letsencrypt
+	@mkdir -p certs letsencrypt tls
 	@touch letsencrypt/acme.json
 	@chmod 600 letsencrypt/acme.json
 	@docker network inspect $(NETWORK) >/dev/null 2>&1 || docker network create $(NETWORK)

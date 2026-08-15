@@ -41,7 +41,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
-      - ./tls.yaml:/tls/tls.yaml:ro
+      - ./tls:/tls:ro
+      - ./certs:/certs:ro
       - ./404.html:/usr/share/nginx/html/index.html:ro
     networks:
       - proxy

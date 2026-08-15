@@ -1,0 +1,4 @@
+.env
+certs/
+letsencrypt/acme.json
+tls/local.yaml

@@ -9,7 +9,7 @@ cp .env.example .env
 make run
 ```
 
-La cible `run` prépare automatiquement `letsencrypt/acme.json` avec les permissions `600`, nécessaires à Traefik pour Let's Encrypt.
+La cible `run` prépare automatiquement `letsencrypt/acme.json` avec les permissions `600`, nécessaires à Traefik pour Let's Encrypt. Ce fichier contient des clés privées et reste exclu de Git.
 
 ## Profil recommandé pour un VPS
 
@@ -77,6 +77,25 @@ TRAEFIK_INSECURE_SKIP_VERIFY=false
 ```
 
 Le port bind du dashboard est un port seul. La valeur `TRAEFIK_DASHBOARD_HOST` reste un IP/host, tandis que `TRAEFIK_DASHBOARD_PORT` reste un numéro de port uniquement.
+
+## Certificat HTTPS local avec mkcert
+
+Installer `mkcert`, puis générer et approuver le certificat local :
+
+```bash
+make cert-local
+make run
+```
+
+Par défaut, le certificat couvre `36o-local.fr` et `*.36o-local.fr`. Un autre domaine peut être fourni avec `LOCAL_CERT_DOMAIN` :
+
+```bash
+make cert-local LOCAL_CERT_DOMAIN=example.local
+```
+
+La cible utilise `~/.local/bin/mkcert` par défaut. Un autre emplacement peut être fourni avec `MKCERT=/chemin/vers/mkcert`.
+
+La CA est installée dans les magasins Firefox/Chrome/Chromium de l'utilisateur. Redémarrer le navigateur après la première installation. Traefik recharge automatiquement le certificat pour les domaines locaux et conserve Let's Encrypt pour les domaines publics. Les fichiers générés dans `certs/` et `tls/local.yaml` restent locaux et sont exclus de Git.
 
 ## HTTPS OVH avec HTTP-01
 
