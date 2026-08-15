@@ -65,6 +65,10 @@ services:
       - "traefik.http.routers.error-page.entrypoints=websecure"
       - "traefik.http.routers.error-page.tls=true"
       - "traefik.http.services.error-page.loadbalancer.server.port=80"
+      - "traefik.http.routers.placeholder-3go.rule=Host(`3go.app`)"
+      - "traefik.http.routers.placeholder-3go.entrypoints=websecure"
+      - "traefik.http.routers.placeholder-3go.priority=10"
+      - "traefik.http.routers.placeholder-3go.service=error-page"
 
 networks:
   proxy:
